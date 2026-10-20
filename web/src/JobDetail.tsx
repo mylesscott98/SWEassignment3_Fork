@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { api, type Candidate, type JobDetail as Detail, type User } from "./api";
+import { ExecutionPanel } from "./ExecutionPanel";
 import { label, when, windowOf } from "./format";
 import { usePolled } from "./usePolled";
 
@@ -70,6 +71,8 @@ export function JobDetail({ user, jobId, run }: { user: User; jobId: string; run
           </div>
         </div>
       </div>
+
+      <ExecutionPanel key={`${job.job_id}-${user.id}`} user={user} jobId={job.job_id} run={run} onChanged={refresh} />
 
       {allocations.length > 0 && (
         <div className="card">

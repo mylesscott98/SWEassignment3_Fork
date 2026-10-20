@@ -1,3 +1,8 @@
-# HTTP API for the web client (§4.2): each endpoint turns a request into a command for
-# DeliveryManagementSystem, or reads through the repository
-from swe.api.app import create_app
+from swe.api.app import create_app as create_base_app
+from swe.api.execution import install_execution_routes
+
+
+def create_app(dms=None):
+    app = create_base_app(dms)
+    install_execution_routes(app)
+    return app

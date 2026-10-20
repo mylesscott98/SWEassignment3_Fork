@@ -1,7 +1,7 @@
-# every stored type's schema, found by model class (or by event_type for events, kind for users)
+# Stored types selected by model class, event type, or account kind.
 from swe.domain.shared import HistoryEvent
 from swe.repo.schema import ItemSchema
-from swe.repo.schemas import job, request, user
+from swe.repo.schemas import execution, job, request, user
 
 SCHEMAS: dict[type, ItemSchema] = {
     schema.model: schema
@@ -21,14 +21,18 @@ SCHEMAS: dict[type, ItemSchema] = {
         user.STAFF_MEMBER,
         user.DELIVERY_STAFF,
         user.AVAILABILITY_SLOT,
+        execution.ATTEMPT,
+        execution.ISSUE,
+        execution.REVIEW,
+        execution.PROGRESS,
+        execution.RECEIPT,
+        execution.TRANSFER,
+        execution.CHANGED,
     ]
 }
-
 EVENT_SCHEMAS: dict[str, ItemSchema] = {
     cls.TYPE: SCHEMAS[cls] for cls in HistoryEvent.registry.values() if cls in SCHEMAS
 }
-
-
 USER_SCHEMAS: dict[str, ItemSchema] = {
     schema.model.model_fields["kind"].default: schema
     for schema in [user.CUSTOMER, user.STAFF_MEMBER, user.DELIVERY_STAFF]
@@ -42,7 +46,6 @@ def schema_for(model: type | object) -> ItemSchema:
     return SCHEMAS[cls]
 
 
-# a stored or streamed history event item, chosen by its event_type
 def event_schema_for(item: dict) -> ItemSchema:
     event_type = item.get("event_type", {}).get("S")
     if event_type not in EVENT_SCHEMAS:
@@ -50,7 +53,6 @@ def event_schema_for(item: dict) -> ItemSchema:
     return EVENT_SCHEMAS[event_type]
 
 
-# a stored user item, chosen by its kind
 def user_schema_for(item: dict) -> ItemSchema:
     kind = item.get("kind", {}).get("S")
     if kind not in USER_SCHEMAS:

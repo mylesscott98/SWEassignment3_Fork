@@ -107,7 +107,7 @@ export class ApiError extends Error {
 
 const BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8001";
 
-async function call<T>(user: User, method: "GET" | "POST" | "DELETE", path: string, body?: unknown): Promise<T> {
+export async function call<T>(user: User, method: "GET" | "POST" | "DELETE", path: string, body?: unknown): Promise<T> {
   const response = await fetch(BASE + path, {
     method,
     headers: { "X-User-Id": user.id, "Content-Type": "application/json" },
@@ -134,8 +134,10 @@ export const api = (user: User) => ({
   issueQuote: (id: string, body: NewQuote) => call<Quote>(user, "POST", `/requests/${id}/quotes`, body),
   accept: (id: string, quoteId: string) => call<QuoteAccepted>(user, "POST", `/requests/${id}/quotes/${quoteId}/accept`),
   reject: (id: string, quoteId: string) => call<Quote>(user, "POST", `/requests/${id}/quotes/${quoteId}/reject`),
-  listJobs: (state?: JobState) => call<JobSummary[]>(user, "GET", `/jobs${state ? `?state=${state}` : ""}`),
-  getJob: (id: string) => call<JobDetail>(user, "GET", `/jobs/${id}`),
+  listJobs: (state?: JobState) => user.role === "driver"
+    ? call<JobSummary[]>(user, "GET", "/tracking/jobs").then(jobs => jobs.filter(j => !state || j.job.state === state))
+    : call<JobSummary[]>(user, "GET", `/jobs${state ? `?state=${state}` : ""}`),
+  getJob: (id: string) => call<JobDetail>(user, "GET", `/tracking/jobs/${id}`),
   candidates: (jobId: string) => call<Candidate[]>(user, "GET", `/jobs/${jobId}/candidates`),
   allocate: (jobId: string, driverId: string) =>
     call<Allocation>(user, "POST", `/jobs/${jobId}/allocate`, { delivery_staff_id: driverId }),
